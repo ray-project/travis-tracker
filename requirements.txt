@@ -4,3 +4,4 @@ pandas
 redis
 tqdm
 python-dotenv
+gunicorn

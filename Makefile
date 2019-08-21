@@ -7,3 +7,7 @@ build:
 copy-assets:
 	rm -rf static
 	cp -r travis-table-render/build static
+
+deploy:
+	git push heroku master
+
