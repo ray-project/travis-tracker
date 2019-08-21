@@ -18,7 +18,7 @@ reg = re.compile(
 """,
     re.MULTILINE | re.VERBOSE,
 )
-r = redis.from_url(os.environ["REDIS"], decode_responses=True)
+r = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
 
 
 def get_master_branch_builds(limit=10):
