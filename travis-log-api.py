@@ -1,14 +1,13 @@
+import datetime
 import json
 import os
 import re
 
+import pytz
 import redis
 import requests
 from dotenv import load_dotenv
 from tqdm import tqdm
-import datetime
-import pytz
-
 
 load_dotenv()
 

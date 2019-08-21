@@ -1,11 +1,11 @@
 import json
+import os
 
 import pandas as pd
 import redis
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import os
 
 load_dotenv()
 
@@ -19,9 +19,11 @@ r = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
 def index():
     return app.send_static_file("index.html")
 
+
 @app.route("/last_updated")
 def last_updated():
     return r.get("last_updated")
+
 
 @app.route("/api")
 def serve_table():

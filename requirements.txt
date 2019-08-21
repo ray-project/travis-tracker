@@ -6,3 +6,4 @@ tqdm
 python-dotenv
 gunicorn
 pytz
+requests
