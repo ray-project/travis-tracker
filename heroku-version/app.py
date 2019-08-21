@@ -26,6 +26,7 @@ def serve_table():
     sorted_build_ids = list(reversed([int(i) for i in build_ids]))[:10]
 
     build_infos = [json.loads(r.get(f"build/{i}")) for i in sorted_build_ids]
+    assert len(build_infos), "Redis shouldn't be empty!"
 
     data = []
     for info in build_infos:
