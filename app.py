@@ -22,6 +22,9 @@ def index():
 
 @app.route("/last_updated")
 def last_updated():
+    last_updated_unix = r.get('last_updated_unix')
+    if last_updated_unix:
+        return last_updated_unix
     return r.get("last_updated")
 
 

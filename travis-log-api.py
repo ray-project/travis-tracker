@@ -1,5 +1,6 @@
 import datetime
 import json
+import time
 import os
 import re
 
@@ -70,3 +71,4 @@ d = datetime.datetime.now()
 timezone = pytz.timezone("America/Los_Angeles")
 d_aware = timezone.localize(d)
 r.set("last_updated", str(d_aware))
+r.set("last_updated_unix", str(time.time()))
