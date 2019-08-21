@@ -12,7 +12,7 @@ load_dotenv()
 app = Flask(__name__, static_url_path="/", static_folder="static")
 CORS(app)
 
-r = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
+r = redis.from_url(os.environ["REDIS"], decode_responses=True)
 
 
 @app.route("/")
