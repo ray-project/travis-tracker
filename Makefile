@@ -5,5 +5,5 @@ build:
 	cd travis-table-render;npm run build
 
 copy-assets:
-	rm -rf heroku-version/static
-	cp -r travis-table-render/build heroku-version/static
+	rm -rf static
+	cp -r travis-table-render/build static
