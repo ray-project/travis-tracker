@@ -74,8 +74,14 @@ const InnerApp: React.FC = () => {
     return renderTable(
       <Col span={12} offset={6}>
         <Spin size="large" />
-        Loading...
-    </Col>)
+        <p>Loading...</p>
+        <p>If it is loading for too long,
+           please file an issue at
+           </p>
+        <p><a href="https://github.com/ray-project/travis-tracker/issues/new">
+          ray-project/travis-tracker repo</a>
+        </p>
+      </Col>)
   }
 
 
