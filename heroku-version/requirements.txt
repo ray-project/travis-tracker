@@ -1,0 +1,6 @@
+flask-cors
+flask
+pandas
+redis
+tqdm
+python-dotenv
