@@ -6,6 +6,9 @@ import redis
 import requests
 from dotenv import load_dotenv
 from tqdm import tqdm
+import datetime
+import pytz
+
 
 load_dotenv()
 
@@ -62,3 +65,9 @@ for build in tqdm(masters):
         status = fetch_test_status(job_id)
 
         r.set(f"job/{job_id}", json.dumps(status))
+
+# retrieve current pacific time
+d = datetime.datetime.now()
+timezone = pytz.timezone("America/Los_Angeles")
+d_aware = timezone.localize(d)
+r.set("last_updated", str(d_aware))

@@ -5,3 +5,4 @@ redis
 tqdm
 python-dotenv
 gunicorn
+pytz

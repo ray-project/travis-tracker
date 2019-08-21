@@ -61,14 +61,28 @@ function renderTable(table: JSX.Element) {
     </div>)
 }
 
+// const DEV_SERVER = "http://127.0.0.1:5000"
+const DEV_SERVER = ""
+
 const InnerApp: React.FC = () => {
   let [rawData, setRawData] = useState<any>()
 
   if (rawData === undefined) {
-    axios.get('/api')
+    axios.get(`${DEV_SERVER}/api`)
       .then(function (response) {
         // handle success
         setRawData(response.data)
+      }).catch(function (error) {
+        console.log("Pinging /api failed")
+        console.log(error)
+      })
+
+    axios.get(`${DEV_SERVER}/last_updated`)
+      .then(function (response) {
+        console.log(`Last updated at (Pacific Time) ${response.data}`)
+      }).catch(function (error) {
+        console.log("Pinging /last_updated failed")
+        console.log(error)
       })
 
     return renderTable(

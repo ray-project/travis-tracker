@@ -14,11 +14,14 @@ CORS(app)
 
 r = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
 
-i
+
 @app.route("/")
 def index():
     return app.send_static_file("index.html")
 
+@app.route("/last_updated")
+def last_updated():
+    return r.get("last_updated")
 
 @app.route("/api")
 def serve_table():
