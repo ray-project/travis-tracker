@@ -26,14 +26,14 @@ function trimRowName(name: string) {
   }
 }
 
-function renderTable(table: JSX.Element) {
+function renderTable(table: JSX.Element, lastUpdated: string) {
   return (
     <div>
       <Col span={20} offset={2}>
         <h1>Ray Project Travis Status Tracker</h1>
 
         <Row>
-          <Col span={8} offset={2}>
+          <Col span={6} offset={2}>
             Icon Legend:
             <ul>
               <li>{GreenCheck} : Passed </li>
@@ -41,10 +41,9 @@ function renderTable(table: JSX.Element) {
               <li>{GreyRightArrow} : Skipped </li>
               <li>{GreyQuestionMark} : Unknown </li>
             </ul>
-
           </Col>
 
-          <Col span={8} offset={-2}>
+          <Col span={6} offset={2}>
             Icon Ordering:
             <ol>
               <li><LinuxIcon />, <PythonIcon /> 2 </li>
@@ -54,6 +53,12 @@ function renderTable(table: JSX.Element) {
             </ol>
 
           </Col>
+
+          {lastUpdated ?
+            <Col span={4} offset={-4}>
+              Last updated (Pacific Time):
+            <li>{lastUpdated.split('.')[0]}</li>
+            </Col> : ""}
         </Row>
 
         {table}
@@ -66,22 +71,24 @@ const DEV_SERVER = ""
 
 const InnerApp: React.FC = () => {
   let [rawData, setRawData] = useState<any>()
+  let [lastUpdated, setLastUpdated] = useState<string>("")
 
   if (rawData === undefined) {
+    axios.get(`${DEV_SERVER}/last_updated`)
+      .then(function (response) {
+        console.log(`Last updated at (Pacific Time) ${response.data}`)
+        setLastUpdated(response.data)
+      }).catch(function (error) {
+        console.log("Pinging /last_updated failed")
+        console.log(error)
+      })
+
     axios.get(`${DEV_SERVER}/api`)
       .then(function (response) {
         // handle success
         setRawData(response.data)
       }).catch(function (error) {
         console.log("Pinging /api failed")
-        console.log(error)
-      })
-
-    axios.get(`${DEV_SERVER}/last_updated`)
-      .then(function (response) {
-        console.log(`Last updated at (Pacific Time) ${response.data}`)
-      }).catch(function (error) {
-        console.log("Pinging /last_updated failed")
         console.log(error)
       })
 
@@ -95,7 +102,7 @@ const InnerApp: React.FC = () => {
         <p><a href="https://github.com/ray-project/travis-tracker/issues/new">
           ray-project/travis-tracker repo</a>
         </p>
-      </Col>)
+      </Col>, lastUpdated)
   }
 
 
@@ -188,7 +195,7 @@ const InnerApp: React.FC = () => {
   return renderTable(<Table columns={columns} dataSource={data}
     // pagination={false} 
     scroll={{ x: 1300 }}
-  />)
+  />, lastUpdated)
 
 }
 
