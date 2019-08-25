@@ -14,6 +14,7 @@ CORS(app)
 
 r = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
 
+COMMITS_LIMIT_NUM = 25
 
 @app.route("/")
 def index():
@@ -31,7 +32,7 @@ def last_updated():
 @app.route("/api")
 def serve_table():
     _, build_ids = r.sscan("build_ids")
-    sorted_build_ids = list(reversed([int(i) for i in build_ids]))[:10]
+    sorted_build_ids = list(reversed([int(i) for i in build_ids]))[:COMMITS_LIMIT_NUM]
 
     build_infos = [json.loads(r.get(f"build/{i}")) for i in sorted_build_ids]
     assert len(build_infos), "Redis shouldn't be empty!"
