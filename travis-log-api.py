@@ -16,12 +16,44 @@ GH_ACCESS_TOKEN = os.environ["GH_TOKEN"]
 
 HEADERS = {"Authorization": f"token {GH_ACCESS_TOKEN}", "Travis-API-Version": "3"}
 reg = re.compile(
-    """
-^python/ray/tests/(.+::[^\s]+).*(PASSED|FAILED|SKIPPED).+
+    r"""
+    ^\s* # whitespace
+    python/ # all test anme should begin with python
+    (.+::[^\s]+) # test name
+    .*
+    (PASSED|FAILED|SKIPPED|✓|⨯|s)
+    .+
 """,
-    re.MULTILINE | re.VERBOSE,
+    re.VERBOSE | re.MULTILINE,
 )
 r = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
+
+pytest_sugar_map = {"✓": "PASSED", "⨯": "FAILED", "s": "SKIPPED"}
+
+
+def _cleanup_ascii_escape(texts):
+    # https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python
+
+    ansi_escape = re.compile(
+        r"""
+        \x1B    # ESC
+        [@-_]   # 7-bit C1 Fe
+        [0-?]*  # Parameter bytes
+        [ -/]*  # Intermediate bytes
+        [@-~]   # Final byte
+    """,
+        re.VERBOSE,
+    )
+
+    return re.sub(ansi_escape, "", texts)
+
+
+def _map_pytest_sugar_to_normal(pytest_result):
+    cleaned_sugar_result = []
+    for test_name, status in pytest_result:
+        status = pytest_sugar_map.get(status, status)
+        cleaned_sugar_result.append((test_name, status))
+    return cleaned_sugar_result
 
 
 def get_master_branch_builds(limit=10):
@@ -50,7 +82,7 @@ def fetch_test_status(job_id):
     if logs_txt == "null" or len(logs_txt) < 100:
         return []
     else:
-        return reg.findall(logs_txt)
+        return _map_pytest_sugar_to_normal(reg.findall(_cleanup_ascii_escape(logs_txt)))
 
 
 masters = get_master_branch_builds(limit=25)
