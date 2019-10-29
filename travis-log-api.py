@@ -51,6 +51,12 @@ def _map_pytest_sugar_to_normal(pytest_result):
     cleaned_sugar_result = []
     for test_name, test_status in pytest_result:
         test_status = pytest_sugar_map.get(test_status, test_status)
+        # sugar strip out python/
+        if test_name.startswith("ray/"):
+            test_name = "python/" + test_name
+        # sugar change class based test from :: -> .
+        # so we are going to normalize it and replace the fault positive .py back
+        test_name = test_name.replace(".", "::").replace("::", ".", 1)
         cleaned_sugar_result.append((test_name, test_status))
     return cleaned_sugar_result
 
@@ -86,7 +92,7 @@ def fetch_test_status(job_id):
 
 ONE_WEEK_SECONDS = 7 * 24 * 60 * 60
 
-masters = get_master_branch_builds(limit=5)
+masters = get_master_branch_builds(limit=25)
 for build in tqdm(masters):
     info = build_info(build)
 

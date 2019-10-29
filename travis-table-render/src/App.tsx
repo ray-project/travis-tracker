@@ -81,8 +81,8 @@ function renderTable(table: JSX.Element, lastUpdated: number) {
   );
 }
 
-// const DEV_SERVER = "http://127.0.0.1:5000";
-const DEV_SERVER = "";
+const DEV_SERVER = "http://127.0.0.1:5000";
+// const DEV_SERVER = "";
 
 const InnerApp: React.FC = () => {
   let [rawData, setRawData] = useState<any>();
@@ -126,9 +126,7 @@ const InnerApp: React.FC = () => {
     );
   }
 
-  let sortedColumnName: number[] = _.uniq(
-    rawData.columns.map((build_id: string[]) => Number(build_id[0]))
-  );
+  let sortedColumnName: number[] = rawData.columns;
 
   let data: Array<any> = [];
   // {key:..., name:..., col1: status, ...}
@@ -159,7 +157,7 @@ const InnerApp: React.FC = () => {
     };
 
     let commitStatus: { [k: string]: any } = {};
-    for (let group of _.zip(sortedColumnName, _.chunk(row, 4) as string[][])) {
+    for (let group of _.zip(sortedColumnName, row)) {
       let [colName, statusGroup] = group;
       commitStatus[colName] = (
         <Typography.Text>
@@ -174,6 +172,7 @@ const InnerApp: React.FC = () => {
       failedCount: failedCount,
       ...commitStatus
     });
+    data = data.sort((a, b) => a.failedCount - b.failedCount).reverse();
     keyCounter += 1;
   }
 

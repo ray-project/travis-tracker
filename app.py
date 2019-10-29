@@ -51,21 +51,22 @@ def serve_table():
                         "build_id": int(info["build_id"]),
                     }
                 )
+    encoding_dict = {"PASSED": 0, "FAILED": 1, "SKIPPED": 2, "UNKNOWN": 3}
 
     df = pd.DataFrame(data)
-    df = df.groupby(["test_name", "job_sequence_number", "build_id"]).first().unstack()
-    df.columns = df.columns.droplevel()
-    df = df.loc[:, sorted_build_ids].unstack().fillna("UNKNOWN")
+    df["joined"] = list(zip(df["job_sequence_number"].tolist(), df["result"].tolist()))
 
-    score_df = df.replace(
-        {"FAILED": 10.0, "UNKNOWN": 0.1, "SKIPPED": 0.0, "PASSED": 0.0}
+    def agg_func(val):
+        result = dict(val.tolist())
+        return [encoding_dict[result.get(i, "UNKNOWN")] for i in range(4)]
+
+    df = df.pivot_table(
+        values="joined", index="test_name", columns="build_id", aggfunc=agg_func
     )
+    df = df.unstack().apply(lambda d: d if isinstance(d, list) else [3] * 4).unstack().T
+    df = df[sorted_build_ids]
 
-    sorted_scores = score_df.sum(axis=1).sort_values(ascending=False)
-    encoding_dict = {"PASSED": 0, "FAILED": 1, "SKIPPED": 2, "UNKNOWN": 3}
-    ranked_df = df.loc[sorted_scores.index].replace(encoding_dict)
-
-    json_data = ranked_df.to_dict(orient="split")
+    json_data = df.to_dict(orient="split")
     build_meta_data = {b["build_id"]: b for b in build_infos}
     json_data["metadata"] = build_meta_data
     json_data["encoding"] = encoding_dict
