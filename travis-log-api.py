@@ -18,8 +18,7 @@ HEADERS = {"Authorization": f"token {GH_ACCESS_TOKEN}", "Travis-API-Version": "3
 reg = re.compile(
     r"""
     ^\s* # whitespace
-    [pythonray]+/ # directory name is either python or ray
-    (.+::[^\s]+) # test name
+    ([^d].+::[^\s]+) # test name
     \s+
     (PASSED|FAILED|SKIPPED|✓|⨯)
     .+$
@@ -87,7 +86,7 @@ def fetch_test_status(job_id):
 
 ONE_WEEK_SECONDS = 7 * 24 * 60 * 60
 
-masters = get_master_branch_builds(limit=25)
+masters = get_master_branch_builds(limit=5)
 for build in tqdm(masters):
     info = build_info(build)
 
