@@ -18,7 +18,7 @@ HEADERS = {"Authorization": f"token {GH_ACCESS_TOKEN}", "Travis-API-Version": "3
 reg = re.compile(
     r"""
     ^\s* # whitespace
-    python/ # all test anme should begin with python
+    ray/ # all test anme should begin with ray directory
     (.+::[^\s]+) # test name
     .*
     (PASSED|FAILED|SKIPPED|✓|⨯|s)
