@@ -18,11 +18,11 @@ HEADERS = {"Authorization": f"token {GH_ACCESS_TOKEN}", "Travis-API-Version": "3
 reg = re.compile(
     r"""
     ^\s* # whitespace
-    ray/ # all test anme should begin with ray directory
+    [pythonray]+/ # directory name is either python or ray
     (.+::[^\s]+) # test name
-    .*
-    (PASSED|FAILED|SKIPPED|✓|⨯|s)
-    .+
+    \s+
+    (PASSED|FAILED|SKIPPED|✓|⨯)
+    .+$
 """,
     re.VERBOSE | re.MULTILINE,
 )
@@ -31,7 +31,7 @@ r = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
 pytest_sugar_map = {"✓": "PASSED", "⨯": "FAILED", "s": "SKIPPED"}
 
 
-def _cleanup_ascii_escape(texts):
+def _cleanup_ascii_escape(bytes_content):
     # https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python
 
     ansi_escape = re.compile(
@@ -41,18 +41,18 @@ def _cleanup_ascii_escape(texts):
         [0-?]*  # Parameter bytes
         [ -/]*  # Intermediate bytes
         [@-~]   # Final byte
-    """,
+    """.encode(),
         re.VERBOSE,
     )
 
-    return re.sub(ansi_escape, "", texts)
+    return re.sub(ansi_escape, b"", bytes_content).decode()
 
 
 def _map_pytest_sugar_to_normal(pytest_result):
     cleaned_sugar_result = []
-    for test_name, status in pytest_result:
-        status = pytest_sugar_map.get(status, status)
-        cleaned_sugar_result.append((test_name, status))
+    for test_name, test_status in pytest_result:
+        test_status = pytest_sugar_map.get(test_status, test_status)
+        cleaned_sugar_result.append((test_name, test_status))
     return cleaned_sugar_result
 
 
@@ -78,12 +78,14 @@ def build_info(build):
 def fetch_test_status(job_id):
     logs_txt = requests.get(
         f"https://api.travis-ci.com/job/{job_id}/log.txt", headers=HEADERS
-    ).text
+    ).content
     if logs_txt == "null" or len(logs_txt) < 100:
         return []
     else:
         return _map_pytest_sugar_to_normal(reg.findall(_cleanup_ascii_escape(logs_txt)))
 
+
+ONE_WEEK_SECONDS = 7 * 24 * 60 * 60
 
 masters = get_master_branch_builds(limit=25)
 for build in tqdm(masters):
@@ -91,12 +93,12 @@ for build in tqdm(masters):
 
     build_id = info["build_id"]
     r.sadd("build_ids", build_id)
-    r.set(f"build/{build_id}", json.dumps(info))
+    r.set(f"build/{build_id}", json.dumps(info), ex=ONE_WEEK_SECONDS)
 
     for job_id in info["job_ids"]:
         status = fetch_test_status(job_id)
 
-        r.set(f"job/{job_id}", json.dumps(status))
+        r.set(f"job/{job_id}", json.dumps(status), ex=ONE_WEEK_SECONDS)
 
 # retrieve current pacific time
 d = datetime.datetime.now()

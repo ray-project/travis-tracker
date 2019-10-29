@@ -16,6 +16,7 @@ r = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
 
 COMMITS_LIMIT_NUM = 25
 
+
 @app.route("/")
 def index():
     return app.send_static_file("index.html")
@@ -23,7 +24,7 @@ def index():
 
 @app.route("/last_updated")
 def last_updated():
-    last_updated_unix = r.get('last_updated_unix')
+    last_updated_unix = r.get("last_updated_unix")
     if last_updated_unix:
         return last_updated_unix
     return r.get("last_updated")
