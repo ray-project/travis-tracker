@@ -1,4 +1,4 @@
-import { Icon, Table, Col, Row, Tooltip, Spin } from "antd";
+import { Icon, Table, Col, Row, Tooltip, Spin, Typography } from "antd";
 import { useState } from "react";
 import React from "react";
 import "./App.css";
@@ -15,16 +15,16 @@ const GreyQuestionMark = <Icon type="question" />;
 const GreyRightArrow = <Icon type="right" />;
 
 function trimRowName(name: string) {
-  if (name.length <= 30) {
-    return name;
-  } else {
-    const shortenedName = name.substring(0, 30);
-    return (
-      <Tooltip title={name}>
-        <span>{shortenedName} </span>
-      </Tooltip>
-    );
-  }
+  let splitArray = name.split("/");
+  let trimmedName = splitArray[splitArray.length - 1];
+
+  return (
+    <Tooltip title={name}>
+      <Typography.Text style={{ width: "300px" }} ellipsis>
+        {trimmedName}
+      </Typography.Text>
+    </Tooltip>
+  );
 }
 
 function renderTable(table: JSX.Element, lastUpdated: number) {
@@ -82,7 +82,7 @@ function renderTable(table: JSX.Element, lastUpdated: number) {
 }
 
 // const DEV_SERVER = "http://127.0.0.1:5000";
-const DEV_SERVER = ""
+const DEV_SERVER = "";
 
 const InnerApp: React.FC = () => {
   let [rawData, setRawData] = useState<any>();
@@ -161,7 +161,11 @@ const InnerApp: React.FC = () => {
     let commitStatus: { [k: string]: any } = {};
     for (let group of _.zip(sortedColumnName, _.chunk(row, 4) as string[][])) {
       let [colName, statusGroup] = group;
-      commitStatus[colName] = statusGroup.map(transformTestStatus);
+      commitStatus[colName] = (
+        <Typography.Text>
+          {statusGroup.map(transformTestStatus)}
+        </Typography.Text>
+      );
     }
 
     data.push({
@@ -190,7 +194,7 @@ const InnerApp: React.FC = () => {
 
     return (
       <Tooltip title={toolTipNode}>
-        <span>{sha} </span>
+        <Typography.Text underline>{sha} </Typography.Text>
       </Tooltip>
     );
   }
@@ -226,7 +230,7 @@ const InnerApp: React.FC = () => {
       columns={columns}
       dataSource={data}
       // pagination={false}
-      scroll={{ x: 1300 }}
+      scroll={{ x: 2700 }}
     />,
     lastUpdated
   );
