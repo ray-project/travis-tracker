@@ -81,8 +81,8 @@ function renderTable(table: JSX.Element, lastUpdated: number) {
   );
 }
 
-const DEV_SERVER = "http://127.0.0.1:5000";
-// const DEV_SERVER = "";
+// const DEV_SERVER = "http://127.0.0.1:5000";
+const DEV_SERVER = "";
 
 const InnerApp: React.FC = () => {
   let [rawData, setRawData] = useState<any>();
