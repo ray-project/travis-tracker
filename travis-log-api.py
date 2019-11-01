@@ -18,7 +18,7 @@ HEADERS = {"Authorization": f"token {GH_ACCESS_TOKEN}", "Travis-API-Version": "3
 reg = re.compile(
     r"""
     ^\s* # whitespace
-    ([^d].+::[^\s]+) # test name
+    ([^\d].+::[^\s]+) # test name
     \s+
     (PASSED|FAILED|SKIPPED|✓|⨯)
     .+$
@@ -28,6 +28,8 @@ reg = re.compile(
 r = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
 
 pytest_sugar_map = {"✓": "PASSED", "⨯": "FAILED", "s": "SKIPPED"}
+
+corrupted_jobs = {251667399}
 
 
 def _cleanup_ascii_escape(bytes_content):
@@ -80,14 +82,24 @@ def build_info(build):
     }
 
 
+# TODO: Timeout this operation.
 def fetch_test_status(job_id):
-    logs_txt = requests.get(
+    if job_id in corrupted_jobs:
+        return []
+
+    resp = requests.get(
         f"https://api.travis-ci.com/job/{job_id}/log.txt", headers=HEADERS
-    ).content
+    )
+    if resp.status_code != 200:
+        return []
+
+    logs_txt = resp.content
     if logs_txt == "null" or len(logs_txt) < 100:
         return []
-    else:
-        return _map_pytest_sugar_to_normal(reg.findall(_cleanup_ascii_escape(logs_txt)))
+
+    out = _cleanup_ascii_escape(logs_txt)
+    out = reg.findall(out)
+    return _map_pytest_sugar_to_normal(out)
 
 
 ONE_WEEK_SECONDS = 7 * 24 * 60 * 60
@@ -98,12 +110,12 @@ for build in tqdm(masters):
 
     build_id = info["build_id"]
     r.sadd("build_ids", build_id)
-    r.set(f"build/{build_id}", json.dumps(info), ex=ONE_WEEK_SECONDS)
+    r.set(f"build/{build_id}", json.dumps(info))
 
     for job_id in info["job_ids"]:
         status = fetch_test_status(job_id)
 
-        r.set(f"job/{job_id}", json.dumps(status), ex=ONE_WEEK_SECONDS)
+        r.set(f"job/{job_id}", json.dumps(status))
 
 # retrieve current pacific time
 d = datetime.datetime.now()
