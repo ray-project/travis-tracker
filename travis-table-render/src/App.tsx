@@ -9,8 +9,12 @@ import _ from "underscore";
 
 import axios from "axios";
 
-const GreenCheck = <Icon type="check" style={{ color: "green" }} />;
-const RedClosed = <Icon type="close" style={{ color: "red" }} />;
+const GreenCheck = (
+  <Icon type="check-square" style={{ color: "green" }} theme="filled" />
+);
+const RedClosed = (
+  <Icon type="close-square" style={{ color: "red" }} theme="filled" />
+);
 const GreyQuestionMark = <Icon type="question" />;
 const GreyRightArrow = <Icon type="right" />;
 
