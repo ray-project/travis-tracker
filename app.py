@@ -64,7 +64,7 @@ def serve_table():
         values="joined", index="test_name", columns="build_id", aggfunc=agg_func
     )
     df = df.unstack().apply(lambda d: d if isinstance(d, list) else [3] * 4).unstack().T
-    df = df[sorted_build_ids]
+    df = df.reindex(columns=sorted_build_ids, fill_value=encoding_dict["UNKNOWN"])
 
     json_data = df.to_dict(orient="split")
     build_meta_data = {b["build_id"]: b for b in build_infos}
