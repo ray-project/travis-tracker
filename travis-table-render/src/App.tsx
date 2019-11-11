@@ -1,5 +1,5 @@
 import { Icon, Table, Col, Row, Tooltip, Spin, Typography } from "antd";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import React from "react";
 import "./App.css";
 import { ReactComponent as LinuxIcon } from "./icons/linux.svg";
@@ -92,7 +92,7 @@ const InnerApp: React.FC = () => {
   let [rawData, setRawData] = useState<any>();
   let [lastUpdated, setLastUpdated] = useState<number>(0);
 
-  if (rawData === undefined) {
+  useEffect(() => {
     axios
       .get(`${DEV_SERVER}/last_updated`)
       .then(function(response) {
@@ -114,7 +114,9 @@ const InnerApp: React.FC = () => {
         console.log("Pinging /api failed");
         console.log(error);
       });
+  }, []);
 
+  if (rawData === undefined) {
     return renderTable(
       <Col span={12} offset={6}>
         <Spin size="large" />
@@ -141,7 +143,7 @@ const InnerApp: React.FC = () => {
     [idx, row] = item;
 
     let failedCount = 0;
-    let countingLeft = 10; // We don't want to count all 25 builds. 
+    let countingLeft = 10; // We don't want to count all 25 builds.
     const transformTestStatus = (testStatus: number) => {
       //   "encoding": {
       //     "PASSED": 0,
@@ -152,9 +154,8 @@ const InnerApp: React.FC = () => {
       if (testStatus === 0) {
         return GreenCheck;
       } else if (testStatus === 1) {
-
         // We can skip the fail count if we don't have any counting left
-        failedCount += (countingLeft <= 0) ? 0 : 1;
+        failedCount += countingLeft <= 0 ? 0 : 1;
         countingLeft -= 1;
 
         return RedClosed;
@@ -168,11 +169,19 @@ const InnerApp: React.FC = () => {
     let commitStatus: { [k: string]: any } = {};
     for (let group of _.zip(sortedColumnName, row)) {
       let [colName, statusGroup] = group;
-      commitStatus[colName] = (
-        <Typography.Text>
-          {statusGroup.map(transformTestStatus)}
-        </Typography.Text>
-      );
+      if (Array.isArray(statusGroup)) {
+        commitStatus[colName] = (
+          <Typography.Text>
+            {statusGroup.map(transformTestStatus)}
+          </Typography.Text>
+        );
+      } else {
+        commitStatus[colName] = (
+          <Typography.Text>
+            {_.times(4, () => GreyQuestionMark)}
+          </Typography.Text>
+        );
+      }
     }
 
     data.push({
