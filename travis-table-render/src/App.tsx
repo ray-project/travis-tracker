@@ -141,6 +141,7 @@ const InnerApp: React.FC = () => {
     [idx, row] = item;
 
     let failedCount = 0;
+    let countingLeft = 10; // We don't want to count all 25 builds. 
     const transformTestStatus = (testStatus: number) => {
       //   "encoding": {
       //     "PASSED": 0,
@@ -151,7 +152,11 @@ const InnerApp: React.FC = () => {
       if (testStatus === 0) {
         return GreenCheck;
       } else if (testStatus === 1) {
-        failedCount += 1;
+
+        // We can skip the fail count if we don't have any counting left
+        failedCount += (countingLeft <= 0) ? 0 : 1;
+        countingLeft -= 1;
+
         return RedClosed;
       } else if (testStatus === 2) {
         return GreyRightArrow;
