@@ -51,20 +51,38 @@ def serve_table():
                         "build_id": int(info["build_id"]),
                     }
                 )
-    encoding_dict = {"PASSED": 0, "FAILED": 1, "SKIPPED": 2, "UNKNOWN": 3}
+
+    UNKNOWN = 0
+
+    encoding_dict = {
+        "NO_STATUS": UNKNOWN,
+        "PASSED": 1,
+        "FLAKY": 2,
+        "TIMEOUT": 3,
+        "FAILED": 4,
+        "INCOMPLETE": UNKNOWN,
+        "REMOTE_FAILURE": UNKNOWN,
+        "FAILED_TO_BUILD": UNKNOWN,
+        "BLAZE_HALTED_BEFORE_TESTING": UNKNOWN,
+    }
 
     df = pd.DataFrame(data)
     df["joined"] = list(zip(df["job_sequence_number"].tolist(), df["result"].tolist()))
 
     def agg_func(val):
         result = dict(val.tolist())
-        return [encoding_dict[result.get(i, "UNKNOWN")] for i in range(4)]
+        return [encoding_dict[result.get(i, "NO_STATUS")] for i in range(2)]
 
     df = df.pivot_table(
         values="joined", index="test_name", columns="build_id", aggfunc=agg_func
     )
-    df = df.unstack().apply(lambda d: d if isinstance(d, list) else [3] * 4).unstack().T
-    df = df.reindex(columns=sorted_build_ids, fill_value=encoding_dict["UNKNOWN"])
+    df = (
+        df.unstack()
+        .apply(lambda d: d if isinstance(d, list) else [UNKNOWN] * 2)
+        .unstack()
+        .T
+    )
+    df = df.reindex(columns=sorted_build_ids, fill_value=encoding_dict["NO_STATUS"])
 
     json_data = df.to_dict(orient="split")
     build_meta_data = {b["build_id"]: b for b in build_infos}

@@ -15,14 +15,29 @@ load_dotenv()
 GH_ACCESS_TOKEN = os.environ["GH_TOKEN"]
 
 HEADERS = {"Authorization": f"token {GH_ACCESS_TOKEN}", "Travis-API-Version": "3"}
+
+BAZEL_STATUS = [
+    "NO_STATUS",
+    "PASSED",
+    "FLAKY",
+    "TIMEOUT",
+    "FAILED",
+    "INCOMPLETE",
+    "REMOTE_FAILURE",
+    "FAILED_TO_BUILD",
+    "BLAZE_HALTED_BEFORE_TESTING",
+]
+
 reg = re.compile(
     r"""
-    ^\s* # whitespace
-    ([^\d].+::[^\s]+) # test name
+    ^\/\/python\/ray
+    ([^\s]+)
     \s+
-    (PASSED|FAILED|SKIPPED|✓|⨯)
+    ({})
     .+$
-""",
+""".format(
+        "|".join(BAZEL_STATUS)
+    ),
     re.VERBOSE | re.MULTILINE,
 )
 r = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
@@ -77,7 +92,7 @@ def build_info(build):
     return {
         "sha": build["commit"]["sha"][:6],
         "commit_message": build["commit"]["message"],
-        "job_ids": [j["id"] for j in build["jobs"][:4]],
+        "job_ids": [j["id"] for j in build["jobs"][:2]],
         "build_id": int(build["id"]),  # so they are sortable
     }
 

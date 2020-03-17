@@ -9,13 +9,21 @@ import _ from "underscore";
 
 import axios from "axios";
 
+// Passed
 const GreenCheck = (
   <Icon type="check-square" style={{ color: "green" }} theme="filled" />
 );
+// Failed
 const RedClosed = (
   <Icon type="close-square" style={{ color: "red" }} theme="filled" />
 );
+// Flaky
+const GreyThunderBolt = <Icon type="thunderbolt" />;
+// Timeout
+const GreyTimeClock = <Icon type="clock-circle" />;
+// Unknown
 const GreyQuestionMark = <Icon type="question" />;
+// Skip
 const GreyRightArrow = <Icon type="right" />;
 
 function trimRowName(name: string) {
@@ -45,6 +53,8 @@ function renderTable(table: JSX.Element, lastUpdated: number) {
               <li>{RedClosed} : Failed </li>
               <li>{GreyRightArrow} : Skipped </li>
               <li>{GreyQuestionMark} : Unknown </li>
+              <li>{GreyThunderBolt} : Flaky </li>
+              <li>{GreyTimeClock} : Timeout </li>
             </ul>
           </Col>
 
@@ -52,13 +62,7 @@ function renderTable(table: JSX.Element, lastUpdated: number) {
             Icon Ordering:
             <ol>
               <li>
-                <LinuxIcon />, <PythonIcon /> 2{" "}
-              </li>
-              <li>
                 <LinuxIcon />, <PythonIcon /> 3{" "}
-              </li>
-              <li>
-                <Icon type="apple" />, <PythonIcon /> 2{" "}
               </li>
               <li>
                 <Icon type="apple" />, <PythonIcon /> 3{" "}
@@ -143,24 +147,41 @@ const InnerApp: React.FC = () => {
     [idx, row] = item;
 
     let failedCount = 0;
-    let countingLeft = 10; // We don't want to count all 25 builds.
+    let timeoutCount = 0;
+    let flakyCount = 0;
     const transformTestStatus = (testStatus: number) => {
-      //   "encoding": {
-      //     "PASSED": 0,
-      //     "FAILED": 1,
-      //     "SKIPPED": 2,
-      //     "UNKNOWN": 3
+      // From app.py
+      // UNKNOWN = 0
+      // encoding_dict = {
+      //     "NO_STATUS": UNKNOWN,
+      //     "PASSED": 1,
+      //     "FLAKY": 2,
+      //     "TIMEOUT": 3,
+      //     "FAILED": 4,
+      //     "INCOMPLETE": UNKNOWN,
+      //     "REMOTE_FAILURE": UNKNOWN,
+      //     "FAILED_TO_BUILD": UNKNOWN,
+      //     "BLAZE_HALTED_BEFORE_TESTING": UNKNOWN,
       // }
-      if (testStatus === 0) {
-        return GreenCheck;
-      } else if (testStatus === 1) {
-        // We can skip the fail count if we don't have any counting left
-        failedCount += countingLeft <= 0 ? 0 : 1;
-        countingLeft -= 1;
 
+      // const UNKNOWN = 0;
+      const PASSED = 1;
+      const FLAKY = 2;
+      const TIMEOUT = 3;
+      const FAILED = 4;
+
+      if (testStatus === PASSED) {
+        return GreenCheck;
+      } else if (testStatus === FAILED) {
+        // We can skip the fail count if we don't have any counting left
+        failedCount += 1;
         return RedClosed;
-      } else if (testStatus === 2) {
-        return GreyRightArrow;
+      } else if (testStatus === FLAKY) {
+        flakyCount += 1;
+        return GreyThunderBolt;
+      } else if (testStatus === TIMEOUT) {
+        timeoutCount += 1;
+        return GreyTimeClock;
       } else {
         return GreyQuestionMark;
       }
@@ -188,9 +209,10 @@ const InnerApp: React.FC = () => {
       key: keyCounter,
       name: trimRowName(idx),
       failedCount: failedCount,
+      weight: failedCount * 100 + timeoutCount + flakyCount * 0.5,
       ...commitStatus
     });
-    data = data.sort((a, b) => a.failedCount - b.failedCount).reverse();
+    data = data.sort((a, b) => a.weight - b.weight).reverse();
     keyCounter += 1;
   }
 
